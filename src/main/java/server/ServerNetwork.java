@@ -1,17 +1,19 @@
 package main.java.server;
 
 import javafx.scene.control.TextArea;
-
-import main.java.client.ClientModel;
-import main.java.utils.FileUtils;
+import main.java.Utils;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.Socket;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
-import java.nio.channels.*;
-import java.util.*;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
+import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.SocketChannel;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 
 
 /**
@@ -27,32 +29,25 @@ class ServerNetwork extends Thread {
     private final static int BUFFER_NAME = 32;
 
     private ByteBuffer typeBuffer;
-    private ByteBuffer nameBuffer;
-    private ByteBuffer readBuffer;
     private ByteBuffer writeBuffer;
 
     private InetSocketAddress listenAddress;
     private static final long CHANNEL_WRITE_SLEEP = 10L;
 
-    private LinkedList<ClientModel> clients;
+    private LinkedList<ServerClientModel> clients;
     private LinkedList<SocketChannel> connections;
     private TextArea messageArea;
     private ServerDB dataStore;
     
     private boolean isRunning;
-    
-    private final static String dataBaseName = "database";
-    private final static boolean dataBaseClear = true;
 
-    ServerNetwork(TextArea area, String address, int port) {
+    ServerNetwork(TextArea area, String address, int port, boolean dbClear) {
         this.messageArea = area;
         this.clients = new LinkedList<>();
         this.connections = new LinkedList<>();
-        this.dataStore = new ServerDB(dataBaseName, dataBaseClear);
+        this.dataStore = new ServerDB("database", dbClear);
         this.listenAddress = new InetSocketAddress(address, port);
         this.typeBuffer = ByteBuffer.allocate(BUFFER_TYPE);
-        this.nameBuffer = ByteBuffer.allocate(BUFFER_NAME);
-        this.readBuffer = ByteBuffer.allocate(BUFFER_SIZE);
         this.writeBuffer = ByteBuffer.allocate(BUFFER_SIZE);
     }
 
@@ -69,7 +64,6 @@ class ServerNetwork extends Thread {
             this.selector = Selector.open();
             ServerSocketChannel serverChannel = ServerSocketChannel.open();
             serverChannel.configureBlocking(false);
-            
             serverChannel.socket().bind(listenAddress);
             serverChannel.register(this.selector, SelectionKey.OP_ACCEPT);
 
@@ -84,12 +78,10 @@ class ServerNetwork extends Thread {
                 }
 
                 // process selected keys...
-                Set<SelectionKey> readyKeys = selector.selectedKeys();
-                Iterator<SelectionKey> iterator = readyKeys.iterator();
+                Iterator<SelectionKey> iterator = selector.selectedKeys().iterator();
+
                 while (iterator.hasNext()) {
                     SelectionKey key = iterator.next();
-
-                    // Remove key from set so we don't process it twice
                     iterator.remove();
 
                     if (!key.isValid()) {
@@ -111,22 +103,23 @@ class ServerNetwork extends Thread {
 
     /**
      * Accept client connection.
+     *
      * @param key {SelectionKey}
      */
     private void doAccept(SelectionKey key) {
         try {
-            ServerSocketChannel serverChannel = (ServerSocketChannel) key.channel();
-            SocketChannel channel = serverChannel.accept();
-            channel.configureBlocking(false);
-            Socket socket = channel.socket();
-            SocketAddress remoteAddress = socket.getRemoteSocketAddress();
-            channel.register(this.selector, SelectionKey.OP_READ);
+            ServerSocketChannel serverSocketChannel = (ServerSocketChannel) key.channel();
+            SocketChannel socketChannel = serverSocketChannel.accept();
+            socketChannel.configureBlocking(false);
+            socketChannel.register(selector, SelectionKey.OP_READ);
+            SocketAddress remoteAddress = socketChannel.socket().getRemoteSocketAddress();
             messageArea.appendText("New connection: " + remoteAddress + "\n");
-            connections.add(channel);
+            connections.add(socketChannel);
         } catch (IOException e) {
             System.out.println("Error on create new connection.");
         }
     }
+
 
     /**
      * Read from the socket channel.
@@ -141,26 +134,21 @@ class ServerNetwork extends Thread {
             int nBytes = channel.read(typeBuffer);
 
             if (nBytes == -1) {
-                closeConnection(channel);
                 channel.close();
                 key.cancel();
+                closeConnection(channel);
                 return;
             }
 
-            nameBuffer.clear();
-            channel.read(nameBuffer);
-            // user or file name
-            String name = ServerUtil.getStringFromBuffer(nameBuffer);
-
             switch (new String(typeBuffer.array())) {
                 case "m":
-                    handleReceiveMessage(name, channel);
+                    handleReceiveMessage(channel);
                     break;
                 case "f":
-                    handleReceiveFile(name, channel);
+                    handleReceiveFile(channel);
                     break;
                 case "d":
-                    handleDownloadFile(name, channel);
+                    handleDownloadFile(channel);
                     break;
                 default:
                     messageArea.appendText("Received: unregistered action.\n");
@@ -174,14 +162,12 @@ class ServerNetwork extends Thread {
     /**
      * Handle receive message from channel.
      *
-     * @param user - user name.
      * @param channel - from where data is retrieve.
      */
-    private void handleReceiveMessage(String user, SocketChannel channel) throws IOException {
-        channel.read(readBuffer);
-        String msg = ServerUtil.getStringFromBuffer(readBuffer);
-        readBuffer.clear();
-        messageArea.appendText(channel.socket().getRemoteSocketAddress() + " [" + user + "]: " + msg + "\n");
+    private void handleReceiveMessage(SocketChannel channel) throws IOException {
+        String user = Utils.readToBufferAsString(BUFFER_NAME, channel);
+        String msg = Utils.readToBufferAsString(BUFFER_SIZE, channel);
+        messageArea.appendText("[" + user + "]: " + msg + "\n");
         switch (msg) {
             case "/online":
             case "/o":
@@ -201,12 +187,8 @@ class ServerNetwork extends Thread {
                         msg = "[" + user + "] logged out.";
                         user = "System";
                         break;
-                    case "/send_file":
-                        msg = "[" + user + "] send new file.";
-                        user = "System";
-                        break;
                     case "/login":
-                        ClientModel client = new ClientModel(channel, user);
+                        ServerClientModel client = new ServerClientModel(channel, user);
                         clients.add(client);
                         sendMessage(channel, "[System]: Welcome to our chat! Online " + clients.size() + " users.");
                         msg = "New user [" + user + "] logged in.";
@@ -219,27 +201,41 @@ class ServerNetwork extends Thread {
     }
 
 
-
     /**
      * Handle receive file from channel.
      *
-     * @param fileName - name of uploading file.
      * @param channel - from where data is retrieve.
      */
-    private void handleReceiveFile(String fileName, SocketChannel channel) throws IOException {
-        FileUtils.saveFile(channel, fileName);
+    private void handleReceiveFile(SocketChannel channel) throws IOException {
+        String user = Utils.readToBufferAsString(BUFFER_NAME, channel);
+        String fileName = Utils.readToBufferAsString(BUFFER_NAME, channel);
+        messageArea.appendText("User [" + user + "] start sending file [" + fileName + "].\n" );
+        if(!ServerFiles.retrieveFromChannelFile(channel, fileName)) {
+            sendMessage(channel, "[System]: Error occur on saving file. Try again later.");
+            messageArea.appendText("User [" + user + "] does not send file [" + fileName + "] with error.\n" );
+        } else {
+            sendBroadcastMessage(channel, "System", "User [" + user + "] send a file [" + fileName + "].");
+            messageArea.appendText("User [" + user + "] sent file [" + fileName + "] successfully.\n" );
+        }
         closeConnection(channel);
     }
 
+
     /**
-     * TODO
      * Handle downloading file
      *
-     * @param fileName - name of downloading file.
      * @param channel - to where data send.
      */
-    private void handleDownloadFile(String fileName, SocketChannel channel) throws IOException {
-        FileUtils.handleSendFile(channel, FileUtils.DIR_PATH + "/" + fileName);
+    private void handleDownloadFile(SocketChannel channel) throws IOException {
+        String user = Utils.readToBufferAsString(BUFFER_NAME, channel);
+        String fileName = Utils.readToBufferAsString(BUFFER_NAME, channel);
+        messageArea.appendText("User [" + user + "] start downloading file [" + fileName + "].\n" );
+        if (!ServerFiles.sendToChannelFile(channel, fileName)) {
+            sendMessage(channel, "[System]: Error occur on downloading file. Try again later.");
+            messageArea.appendText("User [" + user + "] does not download file [" + fileName + "].\n" );
+        } else {
+            messageArea.appendText("User [" + user + "] downloaded file [" + fileName + "] successfully.\n" );
+        }
         closeConnection(channel);
     }
 
@@ -272,7 +268,7 @@ class ServerNetwork extends Thread {
         writeBuffer.put("m".getBytes());
         writeBuffer.put(message.getBytes());
         writeBuffer.flip();
-        for (ClientModel client : clients) {
+        for (ServerClientModel client : clients) {
             if (client.getChannel() != from) {
                 writeToChanel(client.getChannel(), writeBuffer);
             }
@@ -287,7 +283,7 @@ class ServerNetwork extends Thread {
      * @param writeBuffer - ByteBuffer with message.
      */
     private void writeToChanel(SocketChannel channel, ByteBuffer writeBuffer) {
-        ByteBuffer buffer = ServerUtil.cloneBuffer(writeBuffer);
+        ByteBuffer buffer = Utils.cloneBuffer(writeBuffer);
         long nBytes = 0;
         long toWrite = buffer.remaining();
         try {
@@ -310,11 +306,10 @@ class ServerNetwork extends Thread {
     public String getMessageHistory () {
         List<String> messages = dataStore.loadMessageHistory();
         StringBuilder result = new StringBuilder();
-        result.append("\nSTART MESSAGES HISTORY\n");
+        result.append("\nMESSAGES HISTORY:\n");
         for (String message : messages) {
-            result.append(message).append("\n");
+            result.append("- ").append(message).append("\n");
         }
-        result.append("FINISH MESSAGES HISTORY\n");
         return result.toString();
     }
 
@@ -324,13 +319,13 @@ class ServerNetwork extends Thread {
      * @return {String}
      */
     public String getFiles () {
-        List<String> files = FileUtils.getFiles();
+        List<String> files = ServerFiles.getFiles();
         StringBuilder result = new StringBuilder();
-        result.append("\nFILES LIST\n");
+        result.append("\nFILES LIST:\n");
         for (String f: files) {
-            result.append(f).append("\n");
+            result.append("- ").append(f).append("\n");
         }
-        result.append("For download file use `/f:file_name`.\n");
+        result.append("For download file use command `/download file_name`.\n");
         return result.toString();
     }
 
@@ -352,13 +347,15 @@ class ServerNetwork extends Thread {
      */
     private String getClientsName() {
         StringBuilder msg = new StringBuilder();
-        for (ClientModel client: clients) {
+        for (ServerClientModel client: clients) {
             if (client.getName() != null) {
                 msg.append(client.getName()).append(", ");
             }
         }
-        msg = new StringBuilder(msg.substring(0, msg.length() - 2));
-        return msg.toString();
+        if (msg.length() > 3) {
+            return msg.substring(0, msg.length() - 2);
+        }
+        return "No names.";
     }
 
     /**
@@ -367,8 +364,8 @@ class ServerNetwork extends Thread {
      * @param channel - channel from where request came.
      * @return {Client|null}
      */
-    private ClientModel getClientByChannel(SocketChannel channel) {
-        for (ClientModel client: clients) {
+    private ServerClientModel getClientByChannel(SocketChannel channel) {
+        for (ServerClientModel client: clients) {
             if (client.isSameChannel(channel)) {
                 return client;
             }
@@ -384,9 +381,13 @@ class ServerNetwork extends Thread {
     private void closeConnection(SocketChannel channel) {
         messageArea.appendText("Closed connection: " + channel.socket().getRemoteSocketAddress() + "\n");
         connections.remove(channel);
-        ClientModel client = getClientByChannel(channel);
+        ServerClientModel client = getClientByChannel(channel);
         if (client != null) {
             clients.remove(client);
         }
+    }
+
+    public String getInfoStatus() {
+        return "[INFO] Connections: " + connections.size() + ".\n[INFO] Clients " + clients.size() + ": " + getClientsName() + ".\n";
     }
 }

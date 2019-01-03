@@ -1,12 +1,12 @@
-package main.java.client;
+package main.java.server;
 
 import java.nio.channels.SocketChannel;
 
-public class ClientModel {
+public class ServerClientModel {
     private String name = null;
     private SocketChannel channel;
 
-    public ClientModel(SocketChannel channel, String name) {
+    ServerClientModel(SocketChannel channel, String name) {
         this.channel = channel;
         this.name = name;
     }

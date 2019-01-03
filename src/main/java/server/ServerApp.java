@@ -10,8 +10,10 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
-
 public class ServerApp extends Application {
+
+    private final static int PORT = 9093;
+    private final static boolean dataBaseClear = true;
 
     private TextArea messageArea = new TextArea();
     private ServerNetwork server = null;
@@ -25,7 +27,7 @@ public class ServerApp extends Application {
         stage.setScene(new Scene(createContent()));
         stage.setTitle("Server application");
         stage.show();
-        server = new ServerNetwork(messageArea, "localhost", 9093);
+        server = new ServerNetwork(messageArea, "localhost", PORT, dataBaseClear);
         server.start();
     }
 
@@ -61,6 +63,9 @@ public class ServerApp extends Application {
                         break;
                     case "/files":
                         messageArea.appendText(server.getFiles());
+                        break;
+                    case "/info":
+                        messageArea.appendText(server.getInfoStatus());
                         break;
                     default:
                         messageArea.appendText("[System]: " + message + "\n");
