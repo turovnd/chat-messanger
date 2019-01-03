@@ -22,17 +22,22 @@ public class Utils {
      * @param channel - channel from where read data to buffer.
      * @return String
      */
-    public static String readToBufferAsString(int size, SocketChannel channel) throws IOException {
-        ByteBuffer buffer = ByteBuffer.allocate(size);
-        int readVal = channel.read(buffer);
-        if (readVal < 1) {
-            return "Error";
+    public static String readToBufferAsString(int size, SocketChannel channel) {
+        try {
+            ByteBuffer buffer = ByteBuffer.allocate(size);
+            int readVal = channel.read(buffer);
+            if (readVal < 1) {
+                return "Error";
+            }
+            StringBuilder sb = new StringBuilder();
+            buffer.flip();
+            sb.append(Utils.decoder.decode(buffer).toString());
+            buffer.clear();
+            return sb.toString().trim();
+        } catch (IOException e) {
+            System.out.println("Error occur while read data from channel: " + e);
+            return "";
         }
-        StringBuilder sb = new StringBuilder();
-        buffer.flip();
-        sb.append(Utils.decoder.decode(buffer).toString());
-        buffer.clear();
-        return sb.toString().trim();
     }
 
     /**
