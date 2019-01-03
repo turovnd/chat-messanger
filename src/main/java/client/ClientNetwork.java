@@ -78,6 +78,8 @@ class ClientNetwork extends Thread {
 
     /**
      * Read incoming messages.
+     *
+     * @param key - readable selector key.
      */
     private void readMessages (SelectionKey key) {
         try {
@@ -88,14 +90,14 @@ class ClientNetwork extends Thread {
             int nBytes = channel.read(typeBuffer);
 
             if (nBytes == -1) {
-                disconnectChanel("Server was disconnected.");
+                disconnectChannel("Server was disconnected.");
                 key.cancel();
                 return;
             }
 
             switch (new String(typeBuffer.array())) {
                 case "m":
-                    handleReceiveMessage(channel, key);
+                    handleReceiveMessage(channel);
                     break;
                 default:
                     messageArea.appendText("Received: unregistered action.\n");
@@ -107,11 +109,11 @@ class ClientNetwork extends Thread {
 
 
     /**
-     * Disconnect from the main.java.server.
+     * Disconnect from the server.
      *
      * @param message - reason of disconnection.
      */
-    private void disconnectChanel (String message) {
+    private void disconnectChannel (String message) {
         try {
             System.out.println(message);
             isRunning = false;
@@ -125,12 +127,11 @@ class ClientNetwork extends Thread {
     }
 
     /**
-     * Handle receive message from main.java.server.
+     * Handle receive message from server.
      *
      * @param channel - from where retrieve data.
-     * @param key {SelectionKey}
      */
-    private void handleReceiveMessage (SocketChannel channel, SelectionKey key) {
+    private void handleReceiveMessage (SocketChannel channel) {
         try {
             String msg = Utils.readToBufferAsString(BUFFER_SIZE, channel);
             messageArea.appendText(msg + "\n");
@@ -141,6 +142,8 @@ class ClientNetwork extends Thread {
 
     /**
      * Send message to server.
+     *
+     * @param message - text message for sending.
      */
     public void sendMessage (String message) {
         if (message.split(" ")[0].equals("/download")) {
@@ -159,7 +162,7 @@ class ClientNetwork extends Thread {
             switch (message) {
                 case "/exit":
                 case "/q":
-                    disconnectChanel("Client closed application.");
+                    disconnectChannel("Client closed application.");
                     break;
                 case "/login":
                     break;
@@ -181,7 +184,7 @@ class ClientNetwork extends Thread {
     /**
      * Download file by name.
      *
-     * @param message - message in format `/download file_name`
+     * @param message - command for downloading file in format `/download file_name`
      */
     private void downloadFile(String message) {
         if (message.split(" ").length <= 1) {

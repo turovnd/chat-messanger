@@ -4,16 +4,11 @@ import main.java.Utils;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
-import java.util.EnumSet;
 import java.util.Iterator;
 
 class ClientFiles {
@@ -26,8 +21,8 @@ class ClientFiles {
      * Send file from client to server.
      *
      * @param path - path on local PC.
-     * @param user - user name who send file.
-     * @param address - to where send file.
+     * @param user - sender's name.
+     * @param address - address to where send file.
      */
     public static void sendFile (String path, String user, InetSocketAddress address) {
         try {
@@ -89,8 +84,8 @@ class ClientFiles {
     /**
      * Download file from the server.
      *
-     * @param fileName - file name for download.
-     * @param address - from where download file.
+     * @param fileName - name of file for download.
+     * @param address - address from where download file.
      */
     public static void downloadFile (String fileName, String user, InetSocketAddress address) {
         try {

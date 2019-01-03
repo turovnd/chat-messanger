@@ -20,20 +20,27 @@ public class ServerFiles {
      *
      * @param channel - from where read data
      * @param fileName - name of file
-     * @return boolean
+     * @return Boolean
      */
     public static boolean retrieveFromChannelFile (SocketChannel channel, String fileName) {
         return Utils.saveFileFromChannel(DIR_PATH + "/" + fileName, channel, BUFFER_SIZE);
     }
 
+    /**
+     * Send file to channel.
+     *
+     * @param channel - channel to where send file.
+     * @param fileName - name of file that is going to send.
+     * @return Boolean
+     */
     public static boolean sendToChannelFile (SocketChannel channel, String fileName) {
         return Utils.sendFileToChannel(DIR_PATH + "/" + fileName, channel, BUFFER_SIZE);
     }
 
     /**
-     * Get files list in DIR_PATH
+     * Get files from stored directory.
      *
-     * @return List<String>
+     * @return List
      */
     public static List<String> getFiles() {
         List<String> result = new ArrayList<>();

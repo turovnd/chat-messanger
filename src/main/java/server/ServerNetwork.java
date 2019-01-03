@@ -15,12 +15,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-
-/**
- *
- * This is a simple NIO based server.
- *
- */
 class ServerNetwork extends Thread {
     private Selector selector;
 
@@ -57,7 +51,7 @@ class ServerNetwork extends Thread {
     }
 
     /**
-     * Start the server
+     * Start the server.
      */
     private void startServer() {
         try {
@@ -88,9 +82,9 @@ class ServerNetwork extends Thread {
                         continue;
                     }
 
-                    if (key.isAcceptable()) { // Accept client connections
+                    if (key.isAcceptable()) {
                         this.doAccept(key);
-                    } else if (key.isReadable()) { // Read from client
+                    } else if (key.isReadable()) {
                         this.doRead(key);
                     }
                 }
@@ -102,9 +96,9 @@ class ServerNetwork extends Thread {
     }
 
     /**
-     * Accept client connection.
+     * Accept new client connection.
      *
-     * @param key {SelectionKey}
+     * @param key - acceptable selection key.
      */
     private void doAccept(SelectionKey key) {
         try {
@@ -122,9 +116,9 @@ class ServerNetwork extends Thread {
 
 
     /**
-     * Read from the socket channel.
+     * Read data from the socket channel.
      *
-     * @param key {SelectionKey}
+     * @param key readable selection key
      */
     private void doRead(SelectionKey key) {
         try {
@@ -162,7 +156,7 @@ class ServerNetwork extends Thread {
     /**
      * Handle receive message from channel.
      *
-     * @param channel - from where data is retrieve.
+     * @param channel - channel from where data is receiving.
      */
     private void handleReceiveMessage(SocketChannel channel) throws IOException {
         String user = Utils.readToBufferAsString(BUFFER_NAME, channel);
@@ -204,7 +198,7 @@ class ServerNetwork extends Thread {
     /**
      * Handle receive file from channel.
      *
-     * @param channel - from where data is retrieve.
+     * @param channel - channel from where file is receiving.
      */
     private void handleReceiveFile(SocketChannel channel) throws IOException {
         String user = Utils.readToBufferAsString(BUFFER_NAME, channel);
@@ -222,9 +216,9 @@ class ServerNetwork extends Thread {
 
 
     /**
-     * Handle downloading file
+     * Handle downloading file.
      *
-     * @param channel - to where data send.
+     * @param channel - channel to where send file.
      */
     private void handleDownloadFile(SocketChannel channel) throws IOException {
         String user = Utils.readToBufferAsString(BUFFER_NAME, channel);
@@ -241,25 +235,25 @@ class ServerNetwork extends Thread {
 
 
     /**
-     * Send message to chanel.
+     * Send message to channel.
      *
-     * @param channel - to where send message.
-     * @param message - any string.
+     * @param channel - channel to where send message.
+     * @param message - message to clients.
      */
     private void sendMessage(SocketChannel channel, String message) {
         writeBuffer.clear();
         writeBuffer.put("m".getBytes());
         writeBuffer.put(message.getBytes());
         writeBuffer.flip();
-        writeToChanel(channel, writeBuffer);
+        writeToChannel(channel, writeBuffer);
     }
 
     /**
-     * Send message for all socket channels in `clients` array without author chanel.
+     * Send message for all socket channels in `clients` array without sender channel.
      *
-     * @param from - chanel from where message came.
-     * @param name - who send message.
-     * @param msg - any string.
+     * @param from - channel from where message came.
+     * @param name - sender name.
+     * @param msg - message that is broadcasting.
      */
     public void sendBroadcastMessage(SocketChannel from, String name, String msg) {
         String message = "[" + name + "]: " + msg;
@@ -270,19 +264,19 @@ class ServerNetwork extends Thread {
         writeBuffer.flip();
         for (ServerClientModel client : clients) {
             if (client.getChannel() != from) {
-                writeToChanel(client.getChannel(), writeBuffer);
+                writeToChannel(client.getChannel(), writeBuffer);
             }
         }
         writeBuffer.clear();
     }
 
     /**
-     * Write info from buffer to channel.
+     * Write data from buffer to channel.
      *
-     * @param channel - to where send data by socket.
-     * @param writeBuffer - ByteBuffer with message.
+     * @param channel - channel to where write data.
+     * @param writeBuffer - buffer with message.
      */
-    private void writeToChanel(SocketChannel channel, ByteBuffer writeBuffer) {
+    private void writeToChannel(SocketChannel channel, ByteBuffer writeBuffer) {
         ByteBuffer buffer = Utils.cloneBuffer(writeBuffer);
         long nBytes = 0;
         long toWrite = buffer.remaining();
@@ -299,9 +293,9 @@ class ServerNetwork extends Thread {
     }
 
     /**
-     * Get messages history from DB as string.
+     * Get messages history from DB.
      *
-     * @return {String}
+     * @return String
      */
     public String getMessageHistory () {
         List<String> messages = dataStore.loadMessageHistory();
@@ -314,9 +308,9 @@ class ServerNetwork extends Thread {
     }
 
     /**
-     * Get files name list from server directory as string.
+     * Get files name list from server directory.
      *
-     * @return {String}
+     * @return String
      */
     public String getFiles () {
         List<String> files = ServerFiles.getFiles();
@@ -341,9 +335,9 @@ class ServerNetwork extends Thread {
     }
 
     /**
-     * Get clients names as string.
+     * Get clients names.
      *
-     * @return {String}
+     * @return String
      */
     private String getClientsName() {
         StringBuilder msg = new StringBuilder();
@@ -362,7 +356,7 @@ class ServerNetwork extends Thread {
      * Get client by channel.
      *
      * @param channel - channel from where request came.
-     * @return {Client|null}
+     * @return Client|null
      */
     private ServerClientModel getClientByChannel(SocketChannel channel) {
         for (ServerClientModel client: clients) {
@@ -374,9 +368,9 @@ class ServerNetwork extends Thread {
     }
 
     /**
-     * Close connection by chanel.
+     * Close connection by channel.
      *
-     * @param channel - channel for closing.
+     * @param channel - channel that need to close.
      */
     private void closeConnection(SocketChannel channel) {
         messageArea.appendText("Closed connection: " + channel.socket().getRemoteSocketAddress() + "\n");
@@ -387,6 +381,11 @@ class ServerNetwork extends Thread {
         }
     }
 
+    /**
+     * Get connection and clients info.
+     *
+     * @return String
+     */
     public String getInfoStatus() {
         return "[INFO] Connections: " + connections.size() + ".\n[INFO] Clients " + clients.size() + ": " + getClientsName() + ".\n";
     }

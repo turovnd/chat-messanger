@@ -36,6 +36,11 @@ public class ServerDB {
         }
     }
 
+    /**
+     * Store message in DB.
+     *
+     * @param message - message from user.
+     */
     public void addMessage(String message) {
         try {
             connection.prepareStatement("insert into history values('" + message + "');").execute();
@@ -44,6 +49,11 @@ public class ServerDB {
         }
     }
 
+    /**
+     * Get messages history from DB.
+     *
+     * @return List
+     */
     public List<String> loadMessageHistory() {
         List<String> messages = Collections.synchronizedList(new ArrayList<>());
         try {

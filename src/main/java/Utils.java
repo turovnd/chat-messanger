@@ -16,11 +16,11 @@ public class Utils {
     private static CharsetDecoder decoder = Charset.forName( "UTF-8").newDecoder();
 
     /**
-     * Read and decode buffer to string.
+     * Read data from channel, write to buffer based on size and decode buffer to string.
      *
      * @param size - size of buffer.
-     * @param channel - from where read data to buffer.
-     * @return {String}
+     * @param channel - channel from where read data to buffer.
+     * @return String
      */
     public static String readToBufferAsString(int size, SocketChannel channel) throws IOException {
         ByteBuffer buffer = ByteBuffer.allocate(size);
@@ -39,7 +39,7 @@ public class Utils {
      * Create a duplicate of buffer.
      *
      * @param original - ByteBuffer from that duplicate will make.
-     * @return {ByteBuffer}
+     * @return ByteBuffer
      */
     public static ByteBuffer cloneBuffer(ByteBuffer original) {
         ByteBuffer clone = ByteBuffer.allocate(original.capacity());
@@ -51,12 +51,12 @@ public class Utils {
     }
 
     /**
-     * Set string to buffer.
+     * Set string to buffer based on size.
      *
-     * @param buffer - to where set message.
-     * @param size - length of allowed message.
-     * @param message - message to set to buffer.
-     * @return {ByteBuffer}
+     * @param buffer - buffer to where set message.
+     * @param size - size of message.
+     * @param message - message that need to set to buffer.
+     * @return ByteBuffer
      */
     public static ByteBuffer setStringToBuffer(ByteBuffer buffer, int size, String message) {
         int i = 0;
@@ -72,12 +72,12 @@ public class Utils {
     }
 
     /**
-     * Save file from channel.
+     * Save file from channel based in filePath and bufferSize.
      *
      * @param filePath - path to where save file.
      * @param channel - from where retrieve file.
      * @param bufferSize - size of buffer.
-     * @return {boolean}
+     * @return Boolean
      */
     public static boolean saveFileFromChannel (String filePath, SocketChannel channel, int bufferSize) {
         try {
@@ -105,11 +105,12 @@ public class Utils {
     }
 
     /**
-     * Send file to channel.
+     * Send file to channel based on filePath and bufferSize.
+     *
      * @param filePath - path from where retrieve file.
-     * @param channel - to where write file.
+     * @param channel - channel to where write file.
      * @param bufferSize - size of buffer.
-     * @return {boolean}
+     * @return Boolean
      */
     public static boolean sendFileToChannel (String filePath, SocketChannel channel, int bufferSize) {
         try {

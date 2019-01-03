@@ -32,7 +32,7 @@ public class ServerApp extends Application {
     }
 
     /**
-     * Create Content Frame.
+     * Create server content form.
      *
      * @return Parent
      */

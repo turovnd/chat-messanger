@@ -39,7 +39,7 @@ public class ClientApp extends Application {
     }
 
     /**
-     * Create Enter Content Form.
+     * Create entrance content form.
      *
      * @return Parent
      */
@@ -66,7 +66,7 @@ public class ClientApp extends Application {
     }
 
     /**
-     * Create Chat Content Form.
+     * Create chat content form.
      *
      * @return Parent
      */
