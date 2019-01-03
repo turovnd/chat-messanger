@@ -1,0 +1,1 @@
+typeSearchIndex = [{"p":"main.java.client","l":"ClientApp"},{"p":"main.java.server","l":"ServerApp"},{"p":"main.java.server","l":"ServerClientModel"},{"p":"main.java.server","l":"ServerDB"},{"p":"main.java.server","l":"ServerFiles"},{"p":"main.java","l":"Utils"}]
