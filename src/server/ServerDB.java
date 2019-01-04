@@ -48,7 +48,6 @@ public class ServerDB {
      */
     public List<String> loadMessageHistory() {
         List<String> messages = new ArrayList<>();
-
         try {
             BufferedReader reader = new BufferedReader(new FileReader(dataBase));
             String line;
