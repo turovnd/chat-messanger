@@ -1,1 +1,0 @@
-packageSearchIndex = [{"l":"main.java"},{"l":"main.java.client"},{"l":"main.java.server"}]
