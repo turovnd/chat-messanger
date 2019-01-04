@@ -3,6 +3,7 @@ Chat messenger is an application that have JARs files for creating server and cl
 
 ## Getting started
 Run server app: `java -jar jars/server.jar`
+
 Run client app: `java -jar jars/client.jar`
 
 ## Application features
@@ -19,7 +20,7 @@ Functions:
   - Load files list: `/files`
   - Show connections and clients info: `/info`
 
-The command for executing server application.
+The full command for executing server application:
 ```$commandline
 java -jar jars/server.jar dbClear=true dbName=database dirPath=/tmp port=9093
 ```
@@ -44,7 +45,7 @@ Functions:
   - Close application: `/exit` or `/q`
   - Download file from server: `/download file_name`
 
-Use command for executing client application.
+The full command for executing client application:
 ```$commandline
 java -jar jars/client.jar maxFileSize=100 dirPath=/tmp port=9093
 ```
