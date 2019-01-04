@@ -1,7 +1,7 @@
-package main.java.server;
+package server;
 
 import javafx.scene.control.TextArea;
-import main.java.Utils;
+import utils.Utils;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;

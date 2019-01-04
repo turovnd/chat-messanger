@@ -1,7 +1,7 @@
-package main.java.client;
+package client;
 
 import javafx.scene.control.TextArea;
-import main.java.Utils;
+import utils.Utils;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -122,7 +122,7 @@ class ClientNetwork extends Thread {
             }
             System.exit(0);
         } catch (IOException e) {
-            System.out.println("Error occur on disconnecting with main.java.server.");
+            System.out.println("Error occur on disconnecting with server.");
         }
     }
 

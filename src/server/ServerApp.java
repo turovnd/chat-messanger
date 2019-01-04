@@ -1,4 +1,4 @@
-package main.java.server;
+package server;
 
 import javafx.application.Application;
 import javafx.geometry.Insets;
@@ -10,6 +10,8 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
+import java.util.Arrays;
+
 public class ServerApp extends Application {
 
     private final static int PORT = 9093;
@@ -19,6 +21,8 @@ public class ServerApp extends Application {
     private ServerNetwork server = null;
 
     public static void main(String[] args) {
+        System.out.println(Arrays.toString(args));
+        System.out.println(args.getClass());
         launch(args);
     }
 

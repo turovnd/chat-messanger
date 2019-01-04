@@ -1,6 +1,6 @@
-package main.java.server;
+package server;
 
-import main.java.Utils;
+import utils.Utils;
 
 import java.io.IOException;
 import java.nio.channels.SocketChannel;

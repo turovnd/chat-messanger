@@ -1,6 +1,6 @@
-package main.java.client;
+package client;
 
-import main.java.Utils;
+import utils.Utils;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
