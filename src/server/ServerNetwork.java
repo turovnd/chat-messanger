@@ -32,14 +32,16 @@ class ServerNetwork extends Thread {
     private LinkedList<SocketChannel> connections;
     private TextArea messageArea;
     private ServerDB dataStore;
-    
+    private String DIR_PATH;
+
     private boolean isRunning;
 
-    ServerNetwork(TextArea area, String address, int port, boolean dbClear) {
+    ServerNetwork(TextArea area, String address, int port, boolean dbClear, String dbName, String dirPath) {
         this.messageArea = area;
+        this.DIR_PATH = dirPath;
         this.clients = new LinkedList<>();
         this.connections = new LinkedList<>();
-        this.dataStore = new ServerDB("database", dbClear);
+        this.dataStore = new ServerDB(dbName, dbClear);
         this.listenAddress = new InetSocketAddress(address, port);
         this.typeBuffer = ByteBuffer.allocate(BUFFER_TYPE);
         this.writeBuffer = ByteBuffer.allocate(BUFFER_SIZE);
@@ -204,7 +206,7 @@ class ServerNetwork extends Thread {
         String user = Utils.readToBufferAsString(BUFFER_NAME, channel);
         String fileName = Utils.readToBufferAsString(BUFFER_NAME, channel);
         messageArea.appendText("User [" + user + "] start sending file [" + fileName + "].\n" );
-        if(!ServerFiles.retrieveFromChannelFile(channel, fileName)) {
+        if(!ServerFiles.retrieveFromChannelFile(channel, DIR_PATH + "/" + fileName)) {
             sendMessage(channel, "[System]: Error occur on saving file. Try again later.");
             messageArea.appendText("User [" + user + "] does not send file [" + fileName + "] with error.\n" );
         } else {
@@ -224,7 +226,7 @@ class ServerNetwork extends Thread {
         String user = Utils.readToBufferAsString(BUFFER_NAME, channel);
         String fileName = Utils.readToBufferAsString(BUFFER_NAME, channel);
         messageArea.appendText("User [" + user + "] start downloading file [" + fileName + "].\n" );
-        if (!ServerFiles.sendToChannelFile(channel, fileName)) {
+        if (!ServerFiles.sendToChannelFile(channel, DIR_PATH + "/" + fileName)) {
             sendMessage(channel, "[System]: Error occur on downloading file. Try again later.");
             messageArea.appendText("User [" + user + "] does not download file [" + fileName + "].\n" );
         } else {
@@ -313,7 +315,7 @@ class ServerNetwork extends Thread {
      * @return String
      */
     public String getFiles () {
-        List<String> files = ServerFiles.getFiles();
+        List<String> files = ServerFiles.getFiles(DIR_PATH);
         StringBuilder result = new StringBuilder();
         result.append("\nFILES LIST:\n");
         for (String f: files) {

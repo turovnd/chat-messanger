@@ -27,8 +27,11 @@ class ClientNetwork extends Thread {
     private TextArea messageArea;
     private boolean isRunning;
 
-    ClientNetwork(TextArea area, String address, int port) {
+    private String DIR_PATH;
+
+    ClientNetwork(TextArea area, String address, int port, String dirPath) {
         this.messageArea = area;
+        this.DIR_PATH = dirPath;
         this.address = new InetSocketAddress(address, port);
         this.typeBuffer = ByteBuffer.allocate(BUFFER_TYPE);
         this.writeBuffer = ByteBuffer.allocate(BUFFER_TYPE + BUFFER_NAME + BUFFER_SIZE);
@@ -196,7 +199,7 @@ class ClientNetwork extends Thread {
             messageArea.appendText("[System] error: incorrect file name.\n");
         } else {
             messageArea.appendText("[System] file [" + fileName + "] was downloaded successfully.\n");
-            new Thread(() -> ClientFiles.downloadFile(fileName, this.getName(), address)).start();
+            new Thread(() -> ClientFiles.downloadFile(DIR_PATH, fileName, this.getName(), address)).start();
         }
     }
 }

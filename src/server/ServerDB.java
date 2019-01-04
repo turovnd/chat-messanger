@@ -15,12 +15,14 @@ public class ServerDB {
 
     ServerDB(String table, boolean clearDB) {
         this.dataBase = table;
-        if (clearDB) {
-            try {
+        try {
+            if (Files.exists(Paths.get(this.dataBase)) && clearDB) {
                 Files.delete(Paths.get(this.dataBase));
-            } catch (IOException e) {
-                System.out.println("Error occur on deleting file: " + this.dataBase + ". " + e);
+            } else if (!Files.exists(Paths.get(this.dataBase))) {
+                Files.createFile(Paths.get(this.dataBase));
             }
+        } catch (IOException e) {
+            System.out.println("Error occur on deleting file: " + this.dataBase + ". " + e);
         }
     }
 

@@ -15,17 +15,32 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ClientApp extends Application {
 
-    private final static int PORT = 9093;
-    private final static int MAX_FILE_SIZE = 100 * 1000 * 1000;
+    private static final String[] availableParams = {"port", "dirPath", "maxFileSize"};
+    private static int maxFileSize;
+    private static int port;
+    private static String dirPath;
 
     private TextArea messageArea = new TextArea();
     private Stage primaryStage = null;
     private ClientNetwork client = null;
 
     public static void main(String[] args) {
+        Map<String, String> params = new HashMap<>();
+        for (String a : args) {
+            for (String b : availableParams) {
+                if (a.split("=")[0].equals(b)) {
+                    params.put(a.split("=")[0], a.split("=")[1]);
+                }
+            }
+        }
+        maxFileSize = 1000 * 1000 * (params.get("maxFileSize") != null ? Integer.parseInt(params.get("maxFileSize")) : 100);
+        dirPath = params.get("dirPath") != null ? params.get("dirPath") : "/tmp";
+        port = params.get("port") != null ? Integer.parseInt(params.get("port")) : 9093;
         launch(args);
     }
 
@@ -35,7 +50,7 @@ public class ClientApp extends Application {
         primaryStage.setScene(new Scene(createEnterContent()));
         primaryStage.setTitle("Client application");
         primaryStage.show();
-        client = new ClientNetwork( messageArea,"localhost", PORT);
+        client = new ClientNetwork( messageArea,"localhost", port, dirPath);
     }
 
     /**
@@ -99,7 +114,7 @@ public class ClientApp extends Application {
             if (file != null) {
                 if (file.isDirectory()) {
                     messageArea.appendText("Error: file is directory.\n");
-                } else if (file.length() >= MAX_FILE_SIZE) {
+                } else if (file.length() >= maxFileSize) {
                     messageArea.appendText("Error: file size limit.\n");
                 } else {
                     client.sendFile(file.getPath());

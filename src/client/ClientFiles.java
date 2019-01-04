@@ -84,10 +84,11 @@ class ClientFiles {
     /**
      * Download file from the server.
      *
+     * @param dirPath - path to directory to where save file.
      * @param fileName - name of file for download.
      * @param address - address from where download file.
      */
-    public static void downloadFile (String fileName, String user, InetSocketAddress address) {
+    public static void downloadFile (String dirPath, String fileName, String user, InetSocketAddress address) {
         try {
             Selector selector = Selector.open();
 
@@ -125,7 +126,7 @@ class ClientFiles {
 
                     if (key.isReadable()) {
                         isDownloading = false;
-                        Utils.saveFileFromChannel(DIR_PATH + "/" + fileName, channel, BUFFER_SIZE);
+                        Utils.saveFileFromChannel(dirPath + "/" + fileName, channel, BUFFER_SIZE);
                         selector.close();
                     }
                 }

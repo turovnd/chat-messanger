@@ -11,18 +11,33 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ServerApp extends Application {
 
-    private final static int PORT = 9093;
-    private final static boolean dataBaseClear = true;
+    private static final String[] availableParams = {"dbName", "dbClear", "dirPath", "port"};
+    private static boolean dbClear;
+    private static String dbName;
+    private static String dirPath;
+    private static int port;
 
     private TextArea messageArea = new TextArea();
     private ServerNetwork server = null;
 
     public static void main(String[] args) {
-        System.out.println(Arrays.toString(args));
-        System.out.println(args.getClass());
+        Map<String, String> params = new HashMap<>();
+        for (String a : args) {
+            for (String b : availableParams) {
+                if (a.split("=")[0].equals(b)) {
+                    params.put(a.split("=")[0], a.split("=")[1]);
+                }
+            }
+        }
+        dbClear = params.get("dbClear") != null ? params.get("dbClear").equals("true") : Boolean.parseBoolean("true");
+        dbName = params.get("dbName") != null ? params.get("dbName") : "database";
+        dirPath = params.get("dirPath") != null ? params.get("dirPath") : "/tmp";
+        port = params.get("port") != null ? Integer.parseInt(params.get("port")) : 9093;
         launch(args);
     }
 
@@ -31,7 +46,7 @@ public class ServerApp extends Application {
         stage.setScene(new Scene(createContent()));
         stage.setTitle("Server application");
         stage.show();
-        server = new ServerNetwork(messageArea, "localhost", PORT, dataBaseClear);
+        server = new ServerNetwork(messageArea, "localhost", port, dbClear, dbName, dirPath);
         server.start();
     }
 
